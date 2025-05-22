@@ -1,21 +1,50 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import DashboardPrincipal from '@/views/DashboardPrincipal.vue'
+import LoginRegister from '@/views/LoginRegister.vue'
+
+import DashboardUsers from '@/components/users/DashboardUsers.vue'
+import DashboardOrders from '@/components/orders/DashboardOrders.vue'
+import DataTableProducts from '@/components/products/DataTableProducts.vue'
+import DashboardProducts from '@/views/DashboardProducts.vue'
+import ListProducts from '@/components/products/ListProducts.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      name: 'home',
-      component: HomeView,
+      name: 'login',
+      component: LoginRegister,
     },
     {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue'),
+      path: '/home',
+      name: 'dashboard',
+      component: DashboardPrincipal,
+    },
+    {
+      path: '/products',
+      name: 'products',
+      component: DashboardProducts,
+    },
+    {
+      path: '/products/panel',
+      name: 'productsTable',
+      component: DataTableProducts,
+    },
+    {
+      path: '/products/view',
+      name: 'productsView',
+      component: ListProducts,
+    },
+    {
+      path: '/orders',
+      name: 'orders',
+      component: DashboardOrders,
+    },
+    {
+      path: '/users',
+      name: 'users',
+      component: DashboardUsers,
     },
   ],
 })
