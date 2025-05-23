@@ -15,7 +15,7 @@ export async function getProducts() {
     })
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+      throw new Error(`${response.status}`)
     }
 
     const data = await response.json()
@@ -49,7 +49,7 @@ export async function addProduct(
     })
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+      throw new Error(`${response.status}`)
     }
 
     const data = await response.json()
@@ -84,7 +84,7 @@ export async function updateProduct(
     })
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+      throw new Error(`${response.status}`)
     }
 
     const data = await response.json()
@@ -107,7 +107,7 @@ export async function deleteProduct(idProducto: number) {
     })
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+      throw new Error(`${response.status}`)
     }
 
     const data = await response.json()

@@ -14,13 +14,12 @@ export async function loginApi(email: string, password: string) {
     })
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+      throw new Error(`${response.status}`)
     }
 
     const data = await response.json()
     return data
   } catch (error) {
-    console.error('Error en loginApi:', error)
     throw error
   }
 }
@@ -54,13 +53,12 @@ export async function addUser(
     })
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+      throw new Error(`${response.status}`)
     }
 
     const data = await response.json()
     return data
   } catch (error) {
-    console.error('Error addUsers', error)
     throw error
   }
 }
