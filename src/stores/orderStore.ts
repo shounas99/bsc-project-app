@@ -9,6 +9,10 @@ export const useOrderStore = defineStore('OrderStore', () => {
     cantidadProd.value += 1
     precioTotalProd.value += precio
   }
+  function resetOrder() {
+    cantidadProd.value = 0
+    precioTotalProd.value = 0
+  }
 
   return {
     /*state properties*/
@@ -17,5 +21,6 @@ export const useOrderStore = defineStore('OrderStore', () => {
     /*getters*/
     addOrder,
     /*actions*/
+    resetOrder,
   }
 })
