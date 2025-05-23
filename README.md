@@ -1,18 +1,6 @@
 # bsc-app
 
-This template should help get you started developing with Vue 3 in Vite.
-
-## Recommended IDE Setup
-
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
+Project Online Business Management Project with Vue 3, Pinia
 
 ## Project Setup
 
@@ -32,8 +20,21 @@ yarn dev
 yarn build
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+### Lints and fixes files
 
 ```sh
 yarn lint
 ```
+
+## ⚠️ IMPORTANT
+
+## Environment Variables
+
+> Copy the `.env.example` file as `.env.local` and complete the values:
+
+| Variable                | Description                                                       |
+| ----------------------- | ----------------------------------------------------------------- |
+| `VITE_APP_TITLE`        | The title of the application.                                     |
+| `VITE_APP_API_BASE_URL` | Base URL for your backend API.                                    |
+| `VITE_APP_BASE_URL`     | Base URL for the frontend app (used for routing or links).        |
+| `VITE_SUBDOMAIN`        | Optional subdomain (used for multi-tenant setups or API context). |
