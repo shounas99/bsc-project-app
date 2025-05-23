@@ -1,5 +1,4 @@
 <template>
-  <h1>Dashboard</h1>
   <v-container>
     <v-row justify="center">
       <v-col cols="6" md="6">

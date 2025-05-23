@@ -1,7 +1,6 @@
 <template>
   <div class="justify-center">
-    <!-- <NavBar /> -->
-    <h1 class="justify-center black">Welcome</h1>
+    <h1 class="justify-center black">Bienvenido a BSC</h1>
   </div>
 </template>
 
