@@ -2,22 +2,15 @@
   <v-container>
     <v-row>
       <v-col cols="12">
-        <!-- <v-img
-          class="mx-auto my-6"
-          max-width="228"
-          src="https://cdn.vuetifyjs.com/docs/images/logos/vuetify-logo-v3-slim-text-light.svg"
-        ></v-img> -->
-
         <v-card class="mx-auto pa-12 pb-8" elevation="8" max-width="448" rounded="lg">
           <div class="text-subtitle-1 text-medium-emphasi">Correo eléctronico</div>
-
           <v-text-field
             density="compact"
             placeholder="Email address"
             prepend-inner-icon="mdi-email-outline"
             variant="outlined"
+            v-model="dataLogin.correo"
           ></v-text-field>
-
           <div
             class="text-subtitle-1 text-medium-emphasis d-flex align-center justify-space-between"
           >
@@ -32,16 +25,12 @@
             prepend-inner-icon="mdi-lock-outline"
             variant="outlined"
             @click:append-inner="visible = !visible"
+            v-model="dataLogin.contrasenia"
           ></v-text-field>
 
           <v-btn class="mb-8" color="blue" size="large" variant="tonal" block @click="login()">
             Entrar
           </v-btn>
-          <!-- <v-row align="center" justify="center">
-            <v-col cols="12">
-              <v-btn size="x-small">Extra small Button</v-btn>
-            </v-col>
-          </v-row> -->
         </v-card>
       </v-col>
     </v-row>
@@ -51,11 +40,23 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useLoginStore } from '@/stores/loginStore'
+
 const router = useRouter()
+const loginStore = useLoginStore()
 
 const visible = ref(false)
-function login() {
-  router.replace({ path: '/home' })
+const dataLogin = ref({
+  correo: '',
+  contrasenia: '',
+})
+
+async function login() {
+  await loginStore.getUserLogin(dataLogin.value.correo, dataLogin.value.contrasenia)
+  if (loginStore.dataLogin?.isSuccess) {
+    router.replace({ path: '/home' })
+  } else {
+  }
 }
 </script>
 

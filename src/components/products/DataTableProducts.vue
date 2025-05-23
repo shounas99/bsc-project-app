@@ -1,18 +1,10 @@
 <template>
   <v-container>
     <v-sheet border rounded>
-      <v-data-table
-        :headers="headers"
-        :hide-default-footer="books.length < 11"
-        :items="books"
-        color="primary"
-      >
+      <v-data-table :headers="headers" :items="products" color="primary">
         <template v-slot:top>
           <v-toolbar flat color="primary">
-            <v-toolbar-title>
-              <v-icon color="medium-emphasis" size="x-small" start></v-icon>
-              Productos BSC
-            </v-toolbar-title>
+            <v-toolbar-title> Productos BSC </v-toolbar-title>
 
             <v-btn
               class="me-2"
@@ -27,47 +19,39 @@
 
         <template v-slot:[`item.actions`]="{ item }">
           <div class="d-flex ga-2 justify-end">
-            <v-icon color="golden" icon="mdi-pencil" size="large" @click="edit(item.id)"></v-icon>
-
-            <v-icon color="red" icon="mdi-delete" size="large" @click="remove(item.id)"></v-icon>
+            <v-icon color="golden" icon="mdi-pencil" size="large" @click="edit(item)"></v-icon>
+            <v-icon
+              color="red"
+              icon="mdi-delete"
+              size="large"
+              @click="dialogRemove(item.idProducto)"
+            ></v-icon>
           </div>
-        </template>
-
-        <template v-slot:no-data>
-          <v-btn
-            prepend-icon="mdi-backup-restore"
-            rounded="lg"
-            text="Reset data"
-            variant="text"
-            border
-            @click="reset"
-          ></v-btn>
         </template>
       </v-data-table>
     </v-sheet>
 
     <v-dialog v-model="dialog" max-width="500">
-      <v-card :title="`${isEditing ? 'Editar' : 'Add'} Producto`">
+      <v-card :subtitle="`${isEditing ? 'Actualizar' : 'Crear'} Producto`">
         <template v-slot:text>
           <v-row>
             <v-col cols="12">
-              <v-text-field v-model="record.title" label="Producto"></v-text-field>
+              <v-text-field v-model="form.producto" label="Nombre del Producto"></v-text-field>
             </v-col>
-
-            <v-col cols="12" md="6">
-              <v-text-field v-model="record.author" label="Precio"></v-text-field>
+            <v-col cols="12">
+              <v-text-field v-model="form.precio" label="Precio por unidad"></v-text-field>
             </v-col>
-
-            <v-col cols="12" md="6">
+            <v-col cols="12">
+              <v-text-field v-model="form.cantidad" label="Cantidad"></v-text-field>
+            </v-col>
+            <v-col cols="12">
               <v-select
-                v-model="record.genre"
-                :items="['Fiction', 'Dystopian', 'Non-Fiction', 'Sci-Fi']"
-                label="Categoria"
+                v-model="form.idCategoria"
+                :items="categories"
+                label="Categoria del Producto"
+                item-title="categoriaProducto1"
+                item-value="idCategoriaProducto"
               ></v-select>
-            </v-col>
-
-            <v-col cols="12" md="6">
-              <v-number-input v-model="record.pages" :min="1" label="Cantidad"></v-number-input>
             </v-col>
           </v-row>
         </template>
@@ -75,117 +59,159 @@
         <v-divider></v-divider>
 
         <v-card-actions>
-          <v-btn @click="save" color="blue" variant="tonal" elevation="2">Guardar</v-btn>
-          <v-btn @click="dialog = false" color="red" elevation="2" variant="tonal">Cancelar</v-btn>
+          <v-btn text="Guardar" @click="save()" variant="tonal" elevation="3" color="blue"></v-btn>
+          <v-btn
+            text="Cancelar"
+            variant="tonal"
+            @click="cancel()"
+            elevation="3"
+            color="red"
+          ></v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <div class="text-center pa-4">
+      <v-dialog v-model="dialogDelete" max-width="500" persistent>
+        <v-card prepend-icon="mdi-alert-box" title="¿Desea eliminar el producto?">
+          <template v-slot:actions>
+            <v-btn
+              text="Aceptar"
+              variant="tonal"
+              @click="remove"
+              elevation="3"
+              color="blue"
+            ></v-btn>
+            <v-btn
+              text="Cancelar"
+              variant="tonal"
+              @click="dialogDelete = false"
+              elevation="3"
+              color="red"
+            ></v-btn>
+          </template>
+        </v-card>
+      </v-dialog>
+    </div>
   </v-container>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, shallowRef } from 'vue'
-import { useDate } from 'vuetify'
+import { onMounted, ref } from 'vue'
 
-const adapter = useDate()
+import { getProducts, addProduct, updateProduct, deleteProduct } from '@/api/products-api'
+import { getCategoryProducts } from '@/api/catalogs-api'
 
-const DEFAULT_RECORD = {
-  title: '',
-  author: '',
-  genre: '',
-  year: adapter.getYear(adapter.date()),
-  pages: 1,
-}
+const form = ref({
+  idProducto: 0,
+  producto: '',
+  precio: 0,
+  cantidad: 0,
+  idCategoria: 0,
+})
 
 const dialog = ref(false)
-const record = ref<Book | null>(null)
-const books = ref<Book[]>([])
+const dialogDelete = ref(false)
+const products = ref<Product[]>([])
+const isEditing = ref(false)
 
-const isEditing = shallowRef(false)
+const categories = ref({
+  idCategoriaProducto: 0,
+  categoriaProducto1: '',
+})
+
+type Product = {
+  idProducto: number
+  producto: string
+  precio: number
+  cantidad: number
+  idCategoriaProducto: number
+}
 
 const headers = [
-  { title: 'Producto', key: 'title', align: 'start', sortable: false },
-  { title: 'Precio', key: 'author' },
-  { title: 'Categoria', key: 'genre' },
-  // { title: 'Year', key: 'year', align: 'end', sortable: false },
-  { title: 'Cantidad disponible', key: 'pages', align: 'end', sortable: false },
+  { title: 'Producto', key: 'producto', align: 'start' },
+  { title: 'Categoria', key: 'categoriaProducto' },
+  { title: 'Precio', key: 'precio' },
+  { title: 'Cantidad', key: 'cantidad' },
   { title: 'Acciones', key: 'actions', align: 'end', sortable: false },
 ]
 
-onMounted(() => {
-  reset()
-})
+async function getAllProducts() {
+  const response = await getProducts()
+  products.value = response
+}
+
+async function getCategories() {
+  const response = await getCategoryProducts()
+  categories.value = response
+}
+
+function resetForm() {
+  form.value.idProducto = 0
+  form.value.producto = ''
+  form.value.precio = 0
+  form.value.cantidad = 0
+  form.value.idCategoria = 0
+}
+async function save() {
+  if (isEditing.value) {
+    //edit
+    await updateProduct(
+      form.value.idProducto,
+      form.value.producto,
+      form.value.precio,
+      form.value.cantidad,
+      form.value.idCategoria,
+    )
+  } else {
+    //new
+    await addProduct(
+      form.value.producto,
+      form.value.precio,
+      form.value.cantidad,
+      form.value.idCategoria,
+    )
+  }
+  resetForm()
+  getAllProducts()
+  dialog.value = false
+}
+
+async function remove() {
+  await deleteProduct(form.value.idProducto)
+  getAllProducts()
+  dialogDelete.value = false
+}
+async function dialogRemove(idProduct: number) {
+  dialogDelete.value = true
+  form.value.idProducto = idProduct
+}
+
+async function edit(item: Product) {
+  isEditing.value = true
+
+  form.value.idProducto = item.idProducto
+  form.value.producto = item.producto
+  form.value.precio = item.precio
+  form.value.cantidad = item.cantidad
+  form.value.idCategoria = item.idCategoriaProducto
+
+  dialog.value = true
+}
+
+function cancel() {
+  dialog.value = false
+  resetForm()
+}
 
 function add() {
   isEditing.value = false
-  record.value = DEFAULT_RECORD
-  dialog.value = true
-}
-
-function edit(id) {
-  isEditing.value = true
-
-  const found = books.value.find((book) => book.id === id)
-
-  record.value = {
-    id: found.id,
-    title: found.title,
-    author: found.author,
-    genre: found.genre,
-    year: found.year,
-    pages: found.pages,
-  }
 
   dialog.value = true
 }
 
-function remove(id) {
-  const index = books.value.findIndex((book) => book.id === id)
-  books.value.splice(index, 1)
-}
-
-function save() {
-  if (isEditing.value) {
-    const index = books.value.findIndex((book) => book.id === record.value.id)
-    books.value[index] = record.value
-  } else {
-    record.value.id = books.value.length + 1
-    books.value.push(record.value)
-  }
-
-  dialog.value = false
-}
-
-function reset() {
-  dialog.value = false
-  record.value = DEFAULT_RECORD
-  books.value = [
-    {
-      id: 1,
-      title: 'To Kill a Mockingbird',
-      author: 'Harper Lee',
-      genre: 'Fiction',
-      year: 1960,
-      pages: 281,
-    },
-    { id: 2, title: '1984', author: 'George Orwell', genre: 'Dystopian', year: 1949, pages: 328 },
-    {
-      id: 3,
-      title: 'The Great Gatsby',
-      author: 'F. Scott Fitzgerald',
-      genre: 'Fiction',
-      year: 1925,
-      pages: 180,
-    },
-    {
-      id: 4,
-      title: 'Sapiens',
-      author: 'Yuval Noah Harari',
-      genre: 'Non-Fiction',
-      year: 2011,
-      pages: 443,
-    },
-    { id: 5, title: 'Dune', author: 'Frank Herbert', genre: 'Sci-Fi', year: 1965, pages: 412 },
-  ]
-}
+onMounted(() => {
+  getAllProducts()
+  getCategories()
+})
 </script>

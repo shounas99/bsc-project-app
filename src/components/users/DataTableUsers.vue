@@ -1,11 +1,11 @@
 <template>
   <v-sheet border rounded>
-    <v-data-table
-      :headers="headers"
-      :hide-default-footer="books.length < 11"
-      :items="books"
-      color="primary"
-    >
+    <v-data-table :headers="headers" :items="users" color="primary">
+      <template v-slot:[`item.nombre`]="{ item }">
+        <div class="justify-start">
+          <p>{{ item.nombre + ' ' + item.aPaterno + ' ' + item.aMaterno }}</p>
+        </div>
+      </template>
       <template v-slot:top>
         <v-toolbar flat color="kingblue">
           <v-toolbar-title> Usuarios BSC </v-toolbar-title>
@@ -23,21 +23,9 @@
 
       <template v-slot:[`item.actions`]="{ item }">
         <div class="d-flex ga-2 justify-end">
-          <v-icon color="golden" icon="mdi-pencil" size="large" @click="edit(item.id)"></v-icon>
-
-          <v-icon color="red" icon="mdi-delete" size="large" @click="remove(item.id)"></v-icon>
+          <v-icon color="golden" icon="mdi-pencil" size="large" @click="edit(item)"></v-icon>
+          <v-icon color="red" icon="mdi-delete" size="large" @click="remove(item)"></v-icon>
         </div>
-      </template>
-
-      <template v-slot:no-data>
-        <v-btn
-          prepend-icon="mdi-backup-restore"
-          rounded="lg"
-          text="Reset data"
-          variant="text"
-          border
-          @click="reset"
-        ></v-btn>
       </template>
     </v-data-table>
   </v-sheet>
@@ -47,31 +35,38 @@
       <template v-slot:text>
         <v-row>
           <v-col cols="4">
-            <v-text-field v-model="record.title" label="Nombre"></v-text-field>
+            <v-text-field v-model="form.nombre" label="Nombre"></v-text-field>
           </v-col>
           <v-col cols="4">
-            <v-text-field v-model="record.title" label="Apellido paterno"></v-text-field>
+            <v-text-field v-model="form.aPaterno" label="Apellido paterno"></v-text-field>
           </v-col>
           <v-col cols="4">
-            <v-text-field v-model="record.title" label="Apellido materno"></v-text-field>
+            <v-text-field v-model="form.aMaterno" label="Apellido materno"></v-text-field>
           </v-col>
-
-          <v-col cols="12">
-            <v-text-field v-model="record.author" label="Domicilio"></v-text-field>
+          <v-col cols="6">
+            <v-text-field v-model="form.domicilio" label="Domicilio"></v-text-field>
           </v-col>
-
-          <v-col cols="6" md="6">
-            <v-text-field v-model="record.author" label="Correo"></v-text-field>
+          <v-col cols="6">
+            <v-text-field v-model="form.telefono" label="Teléfono"></v-text-field>
           </v-col>
           <v-col cols="6" md="6">
-            <v-text-field v-model="record.author" label="Contraseña"></v-text-field>
+            <v-text-field v-model="form.correo" label="Correo"></v-text-field>
+          </v-col>
+          <v-col cols="6" md="6" v-if="!isEditing">
+            <v-text-field
+              v-model="form.contrasenia"
+              label="Contraseña"
+              type="password"
+            ></v-text-field>
           </v-col>
 
-          <v-col cols="12" md="6">
+          <v-col cols="12" md="12">
             <v-select
-              v-model="record.genre"
-              :items="['Fiction', 'Dystopian', 'Non-Fiction', 'Sci-Fi']"
+              v-model="form.idPerfil"
+              :items="profiles"
               label="Asignar perfil"
+              item-title="perfil"
+              item-value="idPerfil"
             ></v-select>
           </v-col>
         </v-row>
@@ -80,121 +75,128 @@
       <v-divider></v-divider>
 
       <v-card-actions>
-        <v-btn text="Guardar" @click="save" variant="tonal" elevation="3" color="blue"></v-btn>
-        <v-btn
-          text="Cancelar"
-          variant="tonal"
-          @click="dialog = false"
-          elevation="3"
-          color="red"
-        ></v-btn>
+        <v-btn text="Guardar" @click="save()" variant="tonal" elevation="3" color="blue"></v-btn>
+        <v-btn text="Cancelar" variant="tonal" @click="cancel()" elevation="3" color="red"></v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, shallowRef } from 'vue'
-import { useDate } from 'vuetify'
+import { getUsers } from '@/api/users-api'
+import { getProfiles } from '@/api/catalogs-api'
+import { addUser } from '@/api/login-api'
+import { onMounted, ref } from 'vue'
 
-const adapter = useDate()
-
-const DEFAULT_RECORD = {
-  title: '',
-  author: '',
-  genre: '',
-  year: adapter.getYear(adapter.date()),
-  pages: 1,
-}
+const form = ref({
+  idPersona: 0,
+  nombre: '',
+  aPaterno: '',
+  aMaterno: '',
+  domicilio: '',
+  telefono: '',
+  correo: '',
+  contrasenia: '',
+  idPerfil: 0,
+})
 
 const dialog = ref(false)
-const record = ref<Book | null>(null)
-const books = ref<Book[]>([])
-const isEditing = shallowRef(false)
+const users = ref<User[]>([])
+const isEditing = ref(false)
+
+const profiles = ref({
+  idPerfil: 0,
+  perfil: '',
+})
+
+type User = {
+  idPersona?: number
+  nombre: string
+  aPaterno: string
+  aMaterno: string
+  domicilio: string
+  telefono?: string
+  fNacimiento?: string
+  correo: string
+  contrasenia?: string
+  nombrePerfil: number
+}
 
 const headers = [
-  { title: 'Nombre Completo', key: 'title', align: 'start' },
-  { title: 'Correo', key: 'author' },
-  { title: 'Estatus', key: 'genre' },
-  // { title: 'Year', key: 'year', align: 'end' },
-  // { title: 'Pages', key: 'pages', align: 'end' },
+  { title: 'Nombre Completo', key: 'nombre', align: 'start' },
+  { title: 'Correo', key: 'correo' },
+  { title: 'Estatus', key: 'estatusUsuario' },
   { title: 'Acciones', key: 'actions', align: 'end', sortable: false },
 ]
 
-onMounted(() => {
-  reset()
-})
+async function getAllUsers() {
+  const response = await getUsers()
+  users.value = response
+}
+async function getAllProfiles() {
+  const response = await getProfiles()
+  profiles.value = response
+}
+
+function resetForm() {
+  form.value.idPersona = 0
+  form.value.nombre = ''
+  form.value.aPaterno = ''
+  form.value.aMaterno = ''
+  form.value.domicilio = ''
+  form.value.telefono = ''
+  form.value.correo = ''
+  form.value.contrasenia = ''
+  form.value.idPerfil = 0
+}
+async function save() {
+  if (isEditing.value) {
+    //edit
+  } else {
+    //new
+    await addUser(
+      form.value.nombre,
+      form.value.aPaterno,
+      form.value.aMaterno,
+      form.value.domicilio,
+      form.value.telefono,
+      form.value.correo,
+      form.value.contrasenia,
+      form.value.idPerfil,
+    )
+    resetForm()
+    getAllUsers()
+  }
+  dialog.value = false
+}
+
+async function edit(item: User) {
+  isEditing.value = true
+
+  form.value.idPersona = item.idPersona
+  form.value.nombre = item.nombre
+  form.value.aPaterno = item.aPaterno
+  form.value.aMaterno = item.aMaterno
+  form.value.domicilio = item.domicilio
+  form.value.telefono = item.telefono
+  form.value.correo = item.correo
+  form.value.idPerfil = item.nombrePerfil
+
+  dialog.value = true
+}
+
+function cancel() {
+  dialog.value = false
+  resetForm()
+}
 
 function add() {
   isEditing.value = false
-  record.value = DEFAULT_RECORD
   dialog.value = true
 }
 
-function edit(id) {
-  isEditing.value = true
-
-  const found = books.value.find((book) => book.id === id)
-
-  record.value = {
-    id: found.id,
-    title: found.title,
-    author: found.author,
-    genre: found.genre,
-    year: found.year,
-    pages: found.pages,
-  }
-
-  dialog.value = true
-}
-
-function remove(id) {
-  const index = books.value.findIndex((book) => book.id === id)
-  books.value.splice(index, 1)
-}
-
-function save() {
-  if (isEditing.value) {
-    const index = books.value.findIndex((book) => book.id === record.value.id)
-    books.value[index] = record.value
-  } else {
-    record.value.id = books.value.length + 1
-    books.value.push(record.value)
-  }
-
-  dialog.value = false
-}
-
-function reset() {
-  dialog.value = false
-  record.value = DEFAULT_RECORD
-  books.value = [
-    {
-      id: 1,
-      title: 'To Kill a Mockingbird',
-      author: 'Harper Lee',
-      genre: 'Fiction',
-      year: 1960,
-      pages: 281,
-    },
-    { id: 2, title: '1984', author: 'George Orwell', genre: 'Dystopian', year: 1949, pages: 328 },
-    {
-      id: 3,
-      title: 'The Great Gatsby',
-      author: 'F. Scott Fitzgerald',
-      genre: 'Fiction',
-      year: 1925,
-      pages: 180,
-    },
-    {
-      id: 4,
-      title: 'Sapiens',
-      author: 'Yuval Noah Harari',
-      genre: 'Non-Fiction',
-      year: 2011,
-      pages: 443,
-    },
-    { id: 5, title: 'Dune', author: 'Frank Herbert', genre: 'Sci-Fi', year: 1965, pages: 412 },
-  ]
-}
+onMounted(() => {
+  getAllUsers()
+  getAllProfiles()
+})
 </script>

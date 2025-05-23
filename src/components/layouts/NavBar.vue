@@ -3,7 +3,7 @@
     <v-toolbar-title class="font-weight-bold">Panel de Administración BSC</v-toolbar-title>
     <v-spacer />
 
-    <div class="d-flex gap-4">
+    <div class="d-flex" v-if="loginStore.dataLogin?.isSuccess">
       <v-btn
         v-for="item in navItems"
         :key="item.name"
@@ -19,7 +19,7 @@
     </div>
     <v-spacer />
 
-    <v-btn color="red-darken-2" @click="logout" class="ml-2">
+    <v-btn color="yellow-darken-2" @click="logout" class="ml-2">
       <v-icon start>mdi-logout</v-icon>
       Salir
     </v-btn>
@@ -27,6 +27,12 @@
 </template>
 
 <script setup lang="ts">
+import { useLoginStore } from '@/stores/loginStore'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const loginStore = useLoginStore()
+
 const navItems = [
   { name: 'Productos', icon: 'mdi-store-outline', to: '/products' },
   { name: 'Pedidos', icon: 'mdi-package', to: '/orders' },
@@ -34,7 +40,8 @@ const navItems = [
 ]
 
 const logout = () => {
-  console.log('Cerrar sesión')
+  loginStore.$reset()
+  router.replace({ path: '/' })
 }
 </script>
 
@@ -42,8 +49,5 @@ const logout = () => {
 .active-link {
   background-color: #4db6ac;
   border-radius: 8px;
-}
-.gap-4 > * {
-  margin-right: 1rem;
 }
 </style>
