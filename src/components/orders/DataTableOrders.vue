@@ -1,10 +1,6 @@
 <template>
   <v-container>
-    <v-data-table :items="items">
-      <template v-slot:header.id="{ column }">
-        {{ column.title.toUpperCase() }}
-      </template>
-
+    <v-data-table :items="orders" :headers="headers">
       <template v-slot:top>
         <v-toolbar flat color="lightYellow">
           <v-toolbar-title>
@@ -20,46 +16,33 @@
 <style scoped></style>
 
 <script setup lang="ts">
-const items = [
-  {
-    id: 1,
-    name: 'T-Shirt',
-    size: 'M',
-    color: 'Red',
-    price: 19.99,
-    quantity: 10,
-  },
-  {
-    id: 2,
-    name: 'Jeans',
-    size: '32',
-    color: 'Blue',
-    price: 49.99,
-    quantity: 5,
-  },
-  {
-    id: 3,
-    name: 'Sweater',
-    size: 'L',
-    color: 'Green',
-    price: 29.99,
-    quantity: 7,
-  },
-  {
-    id: 4,
-    name: 'Jacket',
-    size: 'XL',
-    color: 'Black',
-    price: 89.99,
-    quantity: 3,
-  },
-  {
-    id: 5,
-    name: 'Socks',
-    size: 'One Size',
-    color: 'White',
-    price: 9.99,
-    quantity: 20,
-  },
+import { getAllOrders } from '@/api/orders-api'
+import { ref } from 'vue'
+import { onMounted } from 'vue'
+
+const orders = ref<Order[]>([])
+
+type Order = {
+  idPedido: number
+  idEstatusPedidos: number
+  estatusPedidos: string
+  cantidad: number
+  precioTotal: number
+}
+
+const headers = [
+  { title: 'ID Pedido', key: 'idPedido', align: 'start' },
+  { title: 'Cantidad', key: 'cantidad' },
+  { title: 'Precio', key: 'precioTotal' },
+  { title: 'Estatus del Pedido', key: 'estatusPedidos' },
 ]
+
+async function getOrders() {
+  const response = await getAllOrders()
+  orders.value = response
+}
+
+onMounted(() => {
+  getOrders()
+})
 </script>

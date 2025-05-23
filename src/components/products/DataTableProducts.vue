@@ -36,17 +36,33 @@
         <template v-slot:text>
           <v-row>
             <v-col cols="12">
-              <v-text-field v-model="form.producto" label="Nombre del Producto"></v-text-field>
+              <v-text-field
+                :rules="textRule"
+                v-model="form.producto"
+                required
+                label="Nombre del Producto"
+              ></v-text-field>
             </v-col>
             <v-col cols="12">
-              <v-text-field v-model="form.precio" label="Precio por unidad"></v-text-field>
+              <v-text-field
+                :rules="textRule"
+                v-model="form.precio"
+                required
+                label="Precio por unidad"
+              ></v-text-field>
             </v-col>
             <v-col cols="12">
-              <v-text-field v-model="form.cantidad" label="Cantidad"></v-text-field>
+              <v-text-field
+                :rules="textRule"
+                v-model="form.cantidad"
+                required
+                label="Cantidad"
+              ></v-text-field>
             </v-col>
             <v-col cols="12">
               <v-select
                 v-model="form.idCategoria"
+                required
                 :items="categories"
                 label="Categoria del Producto"
                 item-title="categoriaProducto1"
@@ -114,6 +130,7 @@ const dialog = ref(false)
 const dialogDelete = ref(false)
 const products = ref<Product[]>([])
 const isEditing = ref(false)
+const textRule = ref([(v: string) => !!v || 'Es necesario llenar este campo.'])
 
 const categories = ref({
   idCategoriaProducto: 0,

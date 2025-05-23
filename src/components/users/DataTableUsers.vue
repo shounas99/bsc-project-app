@@ -24,7 +24,12 @@
       <template v-slot:[`item.actions`]="{ item }">
         <div class="d-flex ga-2 justify-end">
           <v-icon color="golden" icon="mdi-pencil" size="large" @click="edit(item)"></v-icon>
-          <v-icon color="red" icon="mdi-delete" size="large" @click="remove(item)"></v-icon>
+          <v-icon
+            :color="item.estatusUsuario == 'Inactivo' ? 'green' : 'red'"
+            :icon="item.estatusUsuario === 'Inactivo' ? 'mdi-check-circle' : 'mdi-close-circle'"
+            size="large"
+            @click="changeStatus(item.idPersona)"
+          ></v-icon>
         </div>
       </template>
     </v-data-table>
@@ -50,13 +55,14 @@
             <v-text-field v-model="form.telefono" label="Teléfono"></v-text-field>
           </v-col>
           <v-col cols="6" md="6">
-            <v-text-field v-model="form.correo" label="Correo"></v-text-field>
+            <v-text-field v-model="form.correo" label="Correo" :rules="emailRules"></v-text-field>
           </v-col>
           <v-col cols="6" md="6" v-if="!isEditing">
             <v-text-field
               v-model="form.contrasenia"
               label="Contraseña"
               type="password"
+              :rules="passwordRules"
             ></v-text-field>
           </v-col>
 
@@ -83,7 +89,7 @@
 </template>
 
 <script setup lang="ts">
-import { getUsers } from '@/api/users-api'
+import { getUsers, updateStatus } from '@/api/users-api'
 import { getProfiles } from '@/api/catalogs-api'
 import { addUser } from '@/api/login-api'
 import { onMounted, ref } from 'vue'
@@ -103,6 +109,31 @@ const form = ref({
 const dialog = ref(false)
 const users = ref<User[]>([])
 const isEditing = ref(false)
+const emailRules = [
+  (value: string) => {
+    if (value) return true
+    return 'Debe escribir un correo'
+  },
+  (value: string) => {
+    if (/.+@.+\..+/.test(value)) return true
+    return 'Debe escribir un correo valido'
+  },
+]
+const passwordRules = [
+  (value: string) => {
+    if (value) return true
+    return 'Debe escribir una contraseña'
+  },
+  (value: string) => {
+    const isValidLength = value.length >= 8
+    const hasLetter = /[a-zA-Z]/.test(value)
+    const hasNumber = /\d/.test(value)
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(value)
+
+    if (isValidLength && hasLetter && hasNumber && hasSpecialChar) return true
+    return 'Debe tener al menos 8 caracteres, incluyendo letras, números y caracteres'
+  },
+]
 
 const profiles = ref({
   idPerfil: 0,
@@ -168,6 +199,11 @@ async function save() {
     getAllUsers()
   }
   dialog.value = false
+}
+
+async function changeStatus(idUsuario: number) {
+  await updateStatus(idUsuario)
+  await getAllUsers()
 }
 
 async function edit(item: User) {
